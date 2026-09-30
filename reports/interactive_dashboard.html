@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commercial Real Estate Portfolio Analytics | Executive Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0b1120;
+            --bg-secondary: #131e36;
+            --bg-card: #182444;
+            --bg-hover: #1f2f56;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #24355a;
+            --accent-blue: #3b82f6;
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .portfolio-badge {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #93c5fd;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-emerald);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--accent-emerald);
+        }
+
+        /* FILTER BAR */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            background: var(--bg-secondary);
+            padding: 12px 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, input {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .filter-reset-btn {
+            margin-left: auto;
+            background: rgba(244, 63, 94, 0.15);
+            color: #fda4af;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-reset-btn:hover {
+            background: rgba(244, 63, 94, 0.25);
+        }
+
+        /* KPI SCORECARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-indigo));
+        }
+
+        .kpi-card.kpi-emerald::before { background: linear-gradient(90deg, #10b981, #059669); }
+        .kpi-card.kpi-amber::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .kpi-card.kpi-purple::before { background: linear-gradient(90deg, #8b5cf6, #6366f1); }
+
+        .kpi-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 8px 0 4px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .kpi-subtext {
+            font-size: 12px;
+            color: var(--accent-emerald);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+
+        /* NAVIGATION TABS */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: #60a5fa;
+            border-bottom: 2px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CHART GRIDS */
+        .chart-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .chart-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chart-badge {
+            font-size: 11px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* TABLE STYLING */
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 24px;
+        }
+
+        .table-header-box {
+            padding: 18px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 550px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        .badge-pill {
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-office { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .badge-industrial { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .badge-retail { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+        .badge-ig { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-spec { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .badge-urgent { background: rgba(244, 63, 94, 0.25); color: #fda4af; }
+
+        /* SIMULATOR CARD */
+        .simulator-card {
+            background: linear-gradient(135deg, #182444 0%, #1e1b4b 100%);
+            border: 1px solid #4338ca;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .simulator-slider-box {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .slider-input {
+            flex-grow: 1;
+            height: 8px;
+            accent-color: #8b5cf6;
+            cursor: pointer;
+        }
+
+        .slider-val-display {
+            font-size: 22px;
+            font-weight: 800;
+            color: #a78bfa;
+            min-width: 80px;
+        }
+
+        .sim-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .sim-stat-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+
+        .sim-stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #cbd5e1;
+            text-transform: uppercase;
+        }
+
+        .sim-stat-val {
+            font-size: 20px;
+            font-weight: 800;
+            margin-top: 6px;
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-grid-2 { grid-template-columns: 1fr; }
+            body { padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <header>
+        <div class="header-title">
+            <h1>Commercial Real Estate Portfolio & Lease Risk Analytics</h1>
+            <p>Institutional Asset Management Executive Intelligence System | PostgreSQL &bull; Python &bull; Power BI &bull; DAX</p>
+        </div>
+        <div class="portfolio-badge">
+            <span class="badge-dot"></span>
+            <span>25 Properties &bull; 4 Sunbelt Markets &bull; FY2025</span>
+        </div>
+    </header>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label for="filterMarket">Market</label>
+            <select id="filterMarket" onchange="applyFilters()">
+                <option value="All">All Markets (4)</option>
+                <option value="Austin">Austin, TX</option>
+                <option value="Dallas-Fort Worth">Dallas-Fort Worth, TX</option>
+                <option value="Atlanta">Atlanta, GA</option>
+                <option value="Charlotte">Charlotte, NC</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="filterAsset">Asset Class</label>
+            <select id="filterAsset" onchange="applyFilters()">
+                <option value="All">All Asset Classes (3)</option>
+                <option value="Office">Office</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Retail">Retail</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="searchProp">Search</label>
+            <input type="text" id="searchProp" placeholder="Search property or tenant..." onkeyup="applyFilters()">
+        </div>
+
+        <button class="filter-reset-btn" onclick="resetFilters()">Reset Filters</button>
+    </div>
+
+    <!-- KPI SCORECARDS -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Portfolio RSF</div>
+            <div class="kpi-value" id="kpiTotalRsf">6,440,000</div>
+            <div class="kpi-subtext" style="color: #93c5fd;">25 Institutional Assets</div>
+        </div>
+
+        <div class="kpi-card kpi-emerald">
+            <div class="kpi-label">Occupancy Rate</div>
+            <div class="kpi-value" id="kpiOccupancy">74.9%</div>
+            <div class="kpi-subtext" id="kpiOccupiedSqft">4,826,213 RSF Leased</div>
+        </div>
+
+        <div class="kpi-card kpi-purple">
+            <div class="kpi-label">2025 Gross Revenue</div>
+            <div class="kpi-value" id="kpiRevenue">$95.32M</div>
+            <div class="kpi-subtext">$14.80 / RSF / Year</div>
+        </div>
+
+        <div class="kpi-card kpi-amber">
+            <div class="kpi-label">2025 Net Operating Income</div>
+            <div class="kpi-value" id="kpiNoi">$42.64M</div>
+            <div class="kpi-subtext" style="color: #fcd34d;">$6.62 / RSF / Year</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label">Portfolio NOI Margin</div>
+            <div class="kpi-value" id="kpiNoiMargin">44.7%</div>
+            <div class="kpi-subtext" style="color: #94a3b8;">OPEX Ratio: 55.3%</div>
+        </div>
+
+        <div class="kpi-card kpi-purple">
+            <div class="kpi-label">Portfolio WALT</div>
+            <div class="kpi-value" id="kpiWalt">3.56 Yrs</div>
+            <div class="kpi-subtext" style="color: #c4b5fd;">Weighted Avg Lease Term</div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-overview', this)">Portfolio Overview & Financials</button>
+        <button class="tab-btn" onclick="switchTab('tab-properties', this)">Property Performance Deep Dive</button>
+        <button class="tab-btn" onclick="switchTab('tab-rollover', this)">Lease Rollover & Expiration Schedule</button>
+        <button class="tab-btn" onclick="switchTab('tab-risk', this)">Tenant Risk & Stress Test Simulator</button>
+    </div>
+
+    <!-- TAB 1: PORTFOLIO OVERVIEW -->
+    <div id="tab-overview" class="tab-content active">
+        <div class="chart-grid-2">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">RSF & Occupancy Rate by Market</div>
+                    <span class="chart-badge">Sunbelt Metros</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartMarket"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Revenue & RSF by Asset Class</div>
+                    <span class="chart-badge">Sector Allocation</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartAssetClass"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom: 24px;">
+            <div class="chart-header">
+                <div class="chart-title">36-Month Historical Revenue, OPEX, and Net Operating Income ($ Millions)</div>
+                <span class="chart-badge">Jan 2023 – Dec 2025</span>
+            </div>
+            <div class="chart-container" style="height: 320px;">
+                <canvas id="chartHistoricalFin"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: PROPERTY PERFORMANCE GRID -->
+    <div id="tab-properties" class="tab-content">
+        <div class="table-container">
+            <div class="table-header-box">
+                <div class="chart-title">Property-Level Financial & Operational Scorecard</div>
+                <span class="chart-badge" id="propCountBadge">Showing 25 Properties</span>
+            </div>
+            <div class="table-responsive">
+                <table id="propTable">
+                    <thead>
+                        <tr>
+                            <th>Property Name</th>
+                            <th>Market</th>
+                            <th>Asset Class</th>
+                            <th>Total RSF</th>
+                            <th>Occ %</th>
+                            <th>2025 Revenue</th>
+                            <th>2025 OPEX</th>
+                            <th>2025 NOI</th>
+                            <th>NOI Margin</th>
+                            <th>Cap Rate</th>
+                            <th>WALT (Yrs)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="propTableBody">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: LEASE ROLLOVER SCHEDULE -->
+    <div id="tab-rollover" class="tab-content">
+        <div class="chart-grid-2">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Annual Lease Expiration Schedule (2026 – 2033+)</div>
+                    <span class="chart-badge">RSF & Revenue at Risk</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartRollover"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Mark-to-Market Rent Variance ($/SF/Year)</div>
+                    <span class="chart-badge">In-Place vs Asking Rate</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartMtm"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header-box">
+                <div class="chart-title" style="color: #fda4af;">🚨 High Priority Upcoming Lease Expirations (Next 24 Months)</div>
+                <span class="chart-badge" style="background: rgba(244,63,94,0.2); color:#fda4af;">Critical Rollover Exposure</span>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tenant Name</th>
+                            <th>Property</th>
+                            <th>Market</th>
+                            <th>Credit Rating</th>
+                            <th>Leased SF</th>
+                            <th>Base Rent PSF</th>
+                            <th>Annual Rent at Risk</th>
+                            <th>Expiration Date</th>
+                            <th>Risk Tier</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rolloverTableBody">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: TENANT RISK & STRESS TESTING SIMULATOR -->
+    <div id="tab-risk" class="tab-content">
+        <!-- SIMULATOR -->
+        <div class="simulator-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h2 style="font-size: 18px; font-weight: 800; color: #f8fafc;">⚡ Interactive Lease Renewal & Revenue-at-Risk Stress Testing Simulator</h2>
+                    <p style="font-size: 13px; color: #cbd5e1; margin-top: 4px;">Simulate portfolio cash flow sensitivity for 2026–2027 expiring leases by adjusting the projected tenant renewal retention rate.</p>
+                </div>
+                <span class="badge-pill" style="background: rgba(139, 92, 246, 0.3); color: #ddd6fe; border: 1px solid #a78bfa;">2026-2027 Expiring Pool: $27.8M</span>
+            </div>
+
+            <div class="simulator-slider-box">
+                <label style="font-size: 13px; font-weight: 700; color: #e2e8f0; min-width: 170px;">Simulated Renewal Rate:</label>
+                <input type="range" id="simSlider" class="slider-input" min="0" max="100" value="70" step="5" oninput="updateStressTest(this.value)">
+                <div class="slider-val-display" id="simSliderVal">70%</div>
+            </div>
+
+            <div class="sim-results-grid">
+                <div class="sim-stat-card">
+                    <div class="sim-stat-label">Retained Cash Flow</div>
+                    <div class="sim-stat-val" style="color: #10b981;" id="simRetainedRev">$19.46M</div>
+                </div>
+                <div class="sim-stat-card">
+                    <div class="sim-stat-label">Revenue Loss at Risk</div>
+                    <div class="sim-stat-val" style="color: #f43f5e;" id="simLostRev">-$8.34M</div>
+                </div>
+                <div class="sim-stat-card">
+                    <div class="sim-stat-label">Impact on Portfolio NOI</div>
+                    <div class="sim-stat-val" style="color: #f59e0b;" id="simNoiImpact">-19.6%</div>
+                </div>
+                <div class="sim-stat-card">
+                    <div class="sim-stat-label">Post-Stress NOI Margin</div>
+                    <div class="sim-stat-val" style="color: #a78bfa;" id="simPostNoiMargin">39.4%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-grid-2">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Top 10 Tenant Revenue Concentration</div>
+                    <span class="chart-badge">HHI Index: 195.2 (Diversified)</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartTenants"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Portfolio Credit Quality Distribution</div>
+                    <span class="chart-badge">Investment Grade vs Non-Rated</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartCredit"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        Commercial Real Estate Portfolio Performance & Lease Risk Analytics &bull; Designed for Institutional Portfolio Evaluation &bull; Built with PostgreSQL 16, Python, and Power BI DAX Architecture.
+    </footer>
+</div>
+
+<script>
+// ============================================================================
+// DATA OBJECTS
+// ============================================================================
+const propertyData = [
+  {"id":1,"name":"Austin Tech Center","market":"Austin","asset":"Office","rsf":220000,"occ":88.2,"rev":8856974,"opex":2829435,"noi":6027539,"margin":68.1,"cap":7.09,"walt":2.25},
+  {"id":2,"name":"Lakeline Office Park","market":"Austin","asset":"Office","rsf":140000,"occ":68.4,"rev":3275491,"opex":1836593,"noi":1438897,"margin":43.9,"cap":3.79,"walt":1.84},
+  {"id":3,"name":"Round Rock Distribution Hub","market":"Austin","asset":"Industrial","rsf":450000,"occ":27.1,"rev":3204672,"opex":2824050,"noi":380622,"margin":11.9,"cap":0.73,"walt":5.33},
+  {"id":4,"name":"Pflugerville Logistics Center","market":"Austin","asset":"Industrial","rsf":350000,"occ":50.2,"rev":2418873,"opex":1915467,"noi":503406,"margin":20.8,"cap":1.20,"walt":1.81},
+  {"id":5,"name":"Domain Retail Center","market":"Austin","asset":"Retail","rsf":85000,"occ":93.4,"rev":2340325,"opex":942535,"noi":1397790,"margin":59.7,"cap":6.35,"walt":2.76},
+  {"id":6,"name":"Cedar Park Commerce Center","market":"Austin","asset":"Industrial","rsf":280000,"occ":95.7,"rev":2413129,"opex":1577587,"noi":835543,"margin":34.6,"cap":2.61,"walt":2.21},
+  {"id":7,"name":"South Congress Office","market":"Austin","asset":"Office","rsf":180000,"occ":72.8,"rev":6875896,"opex":2360285,"noi":4515611,"margin":65.7,"cap":6.27,"walt":2.50},
+  {"id":8,"name":"Alliance Gateway Industrial","market":"Dallas-Fort Worth","asset":"Industrial","rsf":550000,"occ":89.1,"rev":4075943,"opex":3730477,"noi":345466,"margin":8.5,"cap":0.60,"walt":3.68},
+  {"id":9,"name":"DFW Logistics Park West","market":"Dallas-Fort Worth","asset":"Industrial","rsf":420000,"occ":69.2,"rev":2984307,"opex":2657960,"noi":326347,"margin":10.9,"cap":0.68,"walt":4.99},
+  {"id":10,"name":"Irving Corporate Center","market":"Dallas-Fort Worth","asset":"Office","rsf":200000,"occ":54.8,"rev":7222567,"opex":2797023,"noi":4425544,"margin":61.3,"cap":7.14,"walt":4.71},
+  {"id":11,"name":"Plano Crossing Retail","market":"Dallas-Fort Worth","asset":"Retail","rsf":110000,"occ":89.9,"rev":2496404,"opex":1342297,"noi":1154107,"margin":46.2,"cap":4.12,"walt":2.83},
+  {"id":12,"name":"Frisco Tech Office","market":"Dallas-Fort Worth","asset":"Office","rsf":160000,"occ":86.8,"rev":4547769,"opex":2208231,"noi":2339538,"margin":51.4,"cap":5.85,"walt":3.50},
+  {"id":13,"name":"Mesquite Distribution Center","market":"Dallas-Fort Worth","asset":"Industrial","rsf":380000,"occ":89.5,"rev":2786272,"opex":2185673,"noi":600599,"margin":21.6,"cap":1.50,"walt":5.37},
+  {"id":14,"name":"Richardson Business Park","market":"Dallas-Fort Worth","asset":"Office","rsf":120000,"occ":94.8,"rev":3648828,"opex":1534226,"noi":2114602,"margin":57.9,"cap":7.55,"walt":1.75},
+  {"id":15,"name":"Hartsfield Logistics Hub","market":"Atlanta","asset":"Industrial","rsf":600000,"occ":60.8,"rev":3010263,"opex":3601692,"noi":-591429,"margin":-19.6,"cap":-0.91,"walt":1.91},
+  {"id":16,"name":"Peachtree Corporate Tower","market":"Atlanta","asset":"Office","rsf":250000,"occ":91.7,"rev":9113236,"opex":3116504,"noi":5996732,"margin":65.8,"cap":7.69,"walt":2.59},
+  {"id":17,"name":"Alpharetta Business Center","market":"Atlanta","asset":"Office","rsf":130000,"occ":80.4,"rev":3198918,"opex":1605316,"noi":1593602,"margin":49.8,"cap":5.31,"walt":3.89},
+  {"id":18,"name":"Buckhead Retail Plaza","market":"Atlanta","asset":"Retail","rsf":95000,"occ":91.9,"rev":2258527,"opex":852657,"noi":1405871,"margin":62.2,"cap":5.86,"walt":7.19},
+  {"id":19,"name":"McDonough Distribution Center","market":"Atlanta","asset":"Industrial","rsf":480000,"occ":79.0,"rev":3218723,"opex":2802495,"noi":416228,"margin":12.9,"cap":0.76,"walt":6.02},
+  {"id":20,"name":"Marietta Town Center","market":"Atlanta","asset":"Retail","rsf":75000,"occ":91.4,"rev":1734645,"opex":808212,"noi":926432,"margin":53.4,"cap":5.79,"walt":4.29},
+  {"id":21,"name":"Mooresville Industrial Park","market":"Charlotte","asset":"Industrial","rsf":400000,"occ":78.5,"rev":2206401,"opex":1993100,"noi":213301,"margin":9.7,"cap":0.51,"walt":2.01},
+  {"id":22,"name":"Uptown Charlotte Office","market":"Charlotte","asset":"Office","rsf":190000,"occ":89.2,"rev":6323760,"opex":2464295,"noi":3859466,"margin":61.0,"cap":5.68,"walt":4.56},
+  {"id":23,"name":"Concord Logistics Center","market":"Charlotte","asset":"Industrial","rsf":320000,"occ":77.7,"rev":1874595,"opex":1776676,"noi":97919,"margin":5.2,"cap":0.27,"walt":3.62},
+  {"id":24,"name":"SouthPark Retail Center","market":"Charlotte","asset":"Retail","rsf":105000,"occ":94.7,"rev":2206613,"opex":1095170,"noi":1111442,"margin":50.4,"cap":4.27,"walt":3.80},
+  {"id":25,"name":"University Research Park","market":"Charlotte","asset":"Office","rsf":150000,"occ":75.3,"rev":3028740,"opex":1823848,"noi":1204892,"margin":39.8,"cap":3.77,"walt":2.83}
+];
+
+const topTenantsData = [
+  {"name":"FedEx Supply Chain","rev":3.65,"share":4.5,"rating":"BBB"},
+  {"name":"Home Depot Fulfillment","rev":3.49,"share":4.3,"rating":"A"},
+  {"name":"Amazon Fulfillment Services","rev":3.35,"share":4.1,"rating":"AA"},
+  {"name":"Microsoft","rev":2.84,"share":3.5,"rating":"AAA"},
+  {"name":"PwC US Advisory","rev":2.76,"share":3.4,"rating":"NR"},
+  {"name":"Bank of America Securities","rev":2.58,"share":3.2,"rating":"A"},
+  {"name":"Google LLC","rev":2.42,"share":3.0,"rating":"AA"},
+  {"name":"Target Distribution","rev":2.39,"share":2.9,"rating":"A"},
+  {"name":"Deloitte Consulting","rev":2.31,"share":2.8,"rating":"NR"},
+  {"name":"Apple Inc.","rev":2.15,"share":2.6,"rating":"AAA"}
+];
+
+const upcomingExpirationsData = [
+  {"tenant":"FedEx Supply Chain","property":"Hartsfield Logistics Hub","market":"Atlanta","credit":"BBB","sqft":365000,"rent":5.46,"expRent":1992900,"expDate":"2026-02-15","tier":"URGENT: Major Anchor (< 12M)"},
+  {"tenant":"Apple Inc.","property":"Austin Tech Center","market":"Austin","credit":"AAA","sqft":48000,"rent":44.80,"expRent":2150400,"expDate":"2026-06-30","tier":"HIGH: Tech Anchor (< 12M)"},
+  {"tenant":"PwC US Advisory","property":"Peachtree Corporate Tower","market":"Atlanta","credit":"NR","sqft":55000,"rent":38.20,"expRent":2101000,"expDate":"2026-09-30","tier":"HIGH: Professional (< 12M)"},
+  {"tenant":"Home Depot Fulfillment","property":"Alliance Gateway Industrial","market":"Dallas-Fort Worth","credit":"A","sqft":220000,"rent":7.15,"expRent":1573000,"expDate":"2026-11-30","tier":"HIGH: Distribution (< 12M)"},
+  {"tenant":"Google LLC","property":"South Congress Office","market":"Austin","credit":"AA","sqft":38000,"rent":42.50,"expRent":1615000,"expDate":"2027-03-31","tier":"MEDIUM: Anchor (12-24M)"},
+  {"tenant":"Amazon Fulfillment Services","property":"McDonough Distribution Center","market":"Atlanta","credit":"AA","sqft":240000,"rent":6.30,"expRent":1512000,"expDate":"2027-08-31","tier":"MEDIUM: Logistics (12-24M)"}
+];
+
+// 36-Month Historical Revenue / OPEX / NOI Aggregate
+const histMonths = [
+  "23-Jan","23-Feb","23-Mar","23-Apr","23-May","23-Jun","23-Jul","23-Aug","23-Sep","23-Oct","23-Nov","23-Dec",
+  "24-Jan","24-Feb","24-Mar","24-Apr","24-May","24-Jun","24-Jul","24-Aug","24-Sep","24-Oct","24-Nov","24-Dec",
+  "25-Jan","25-Feb","25-Mar","25-Apr","25-May","25-Jun","25-Jul","25-Aug","25-Sep","25-Oct","25-Nov","25-Dec"
+];
+const histRev = [6.8, 6.9, 7.1, 7.2, 7.3, 7.4, 7.3, 7.5, 7.6, 7.7, 7.8, 7.9, 7.7, 7.8, 7.9, 8.0, 8.1, 8.2, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 7.7, 7.8, 7.9, 8.0, 8.0, 8.1, 8.0, 8.1, 8.1, 8.2, 8.2, 8.3];
+const histOpex = [3.9, 4.0, 4.1, 4.1, 4.2, 4.3, 4.2, 4.3, 4.4, 4.4, 4.5, 4.5, 4.1, 4.2, 4.2, 4.3, 4.3, 4.4, 4.3, 4.4, 4.5, 4.5, 4.6, 4.6, 4.2, 4.3, 4.3, 4.4, 4.4, 4.5, 4.4, 4.5, 4.5, 4.5, 4.6, 4.6];
+const histNoi = histRev.map((r, i) => parseFloat((r - histOpex[i]).toFixed(2)));
+
+// ============================================================================
+// INITIALIZATION & TAB SWITCHING
+// ============================================================================
+let charts = {};
+
+function switchTab(tabId, el) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+}
+
+function renderPropertyTable(data) {
+    const tbody = document.getElementById('propTableBody');
+    tbody.innerHTML = '';
+    data.forEach(p => {
+        const assetBadge = p.asset === 'Office' ? 'badge-office' : (p.asset === 'Industrial' ? 'badge-industrial' : 'badge-retail');
+        const marginColor = p.margin > 50 ? '#10b981' : (p.margin > 20 ? '#f59e0b' : '#f43f5e');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${p.name}</strong></td>
+            <td>${p.market}</td>
+            <td><span class="badge-pill ${assetBadge}">${p.asset}</span></td>
+            <td>${p.rsf.toLocaleString()}</td>
+            <td><strong>${p.occ.toFixed(1)}%</strong></td>
+            <td>$${(p.rev/1e6).toFixed(2)}M</td>
+            <td>$${(p.opex/1e6).toFixed(2)}M</td>
+            <td>$${(p.noi/1e6).toFixed(2)}M</td>
+            <td style="color:${marginColor}; font-weight:700;">${p.margin.toFixed(1)}%</td>
+            <td>${p.cap.toFixed(2)}%</td>
+            <td>${p.walt.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    document.getElementById('propCountBadge').innerText = `Showing ${data.length} of 25 Properties`;
+}
+
+function renderRolloverTable() {
+    const tbody = document.getElementById('rolloverTableBody');
+    tbody.innerHTML = '';
+    upcomingExpirationsData.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${e.tenant}</strong></td>
+            <td>${e.property}</td>
+            <td>${e.market}</td>
+            <td><span class="badge-pill badge-ig">${e.credit}</span></td>
+            <td>${e.sqft.toLocaleString()} RSF</td>
+            <td>$${e.rent.toFixed(2)}</td>
+            <td><strong style="color:#fda4af;">$${(e.expRent/1e6).toFixed(2)}M</strong></td>
+            <td>${e.expDate}</td>
+            <td><span class="badge-pill badge-urgent">${e.tier}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateStressTest(rate) {
+    document.getElementById('simSliderVal').innerText = rate + '%';
+    const totalExpPool = 27.8; // $27.8M total 2026-2027 expiring rent pool
+    const retained = totalExpPool * (rate / 100);
+    const lost = totalExpPool - retained;
+    const baseNoi = 42.64;
+    const postStressNoi = baseNoi - lost;
+    const postStressMargin = (postStressNoi / (95.32 - lost)) * 100;
+    const noiChangePct = ((postStressNoi - baseNoi) / baseNoi) * 100;
+
+    document.getElementById('simRetainedRev').innerText = `$${retained.toFixed(2)}M`;
+    document.getElementById('simLostRev').innerText = `-$${lost.toFixed(2)}M`;
+    document.getElementById('simNoiImpact').innerText = `${noiChangePct.toFixed(1)}%`;
+    document.getElementById('simPostNoiMargin').innerText = `${postStressMargin.toFixed(1)}%`;
+}
+
+function applyFilters() {
+    const mkt = document.getElementById('filterMarket').value;
+    const asset = document.getElementById('filterAsset').value;
+    const search = document.getElementById('searchProp').value.toLowerCase();
+
+    let filtered = propertyData.filter(p => {
+        const matchMkt = mkt === 'All' || p.market === mkt;
+        const matchAsset = asset === 'All' || p.asset === asset;
+        const matchSearch = search === '' || p.name.toLowerCase().includes(search) || p.market.toLowerCase().includes(search);
+        return matchMkt && matchAsset && matchSearch;
+    });
+
+    renderPropertyTable(filtered);
+
+    // Update KPIs based on filter
+    const totalRsf = filtered.reduce((s, p) => s + p.rsf, 0);
+    const totalOccSf = filtered.reduce((s, p) => s + (p.rsf * p.occ / 100), 0);
+    const totalRev = filtered.reduce((s, p) => s + p.rev, 0);
+    const totalOpex = filtered.reduce((s, p) => s + p.opex, 0);
+    const totalNoi = filtered.reduce((s, p) => s + p.noi, 0);
+    const avgOcc = totalRsf > 0 ? (totalOccSf / totalRsf) * 100 : 0;
+    const noiMargin = totalRev > 0 ? (totalNoi / totalRev) * 100 : 0;
+
+    document.getElementById('kpiTotalRsf').innerText = totalRsf.toLocaleString();
+    document.getElementById('kpiOccupancy').innerText = avgOcc.toFixed(1) + '%';
+    document.getElementById('kpiOccupiedSqft').innerText = Math.round(totalOccSf).toLocaleString() + ' RSF Leased';
+    document.getElementById('kpiRevenue').innerText = '$' + (totalRev / 1e6).toFixed(2) + 'M';
+    document.getElementById('kpiNoi').innerText = '$' + (totalNoi / 1e6).toFixed(2) + 'M';
+    document.getElementById('kpiNoiMargin').innerText = noiMargin.toFixed(1) + '%';
+}
+
+function resetFilters() {
+    document.getElementById('filterMarket').value = 'All';
+    document.getElementById('filterAsset').value = 'All';
+    document.getElementById('searchProp').value = '';
+    applyFilters();
+}
+
+// ============================================================================
+// CHART INITIALIZATION
+// ============================================================================
+function initCharts() {
+    // 1. Market RSF & Occupancy
+    const ctxMarket = document.getElementById('chartMarket').getContext('2d');
+    charts.market = new Chart(ctxMarket, {
+        type: 'bar',
+        data: {
+            labels: ['Dallas-Fort Worth', 'Atlanta', 'Austin', 'Charlotte'],
+            datasets: [
+                {
+                    label: 'Total RSF (M SF)',
+                    data: [2.12, 1.63, 1.55, 1.14],
+                    backgroundColor: '#334155',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Occupied RSF (M SF)',
+                    data: [1.52, 1.25, 1.30, 0.75],
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#94a3b8' } } },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+
+    // 2. Asset Class Revenue
+    const ctxAsset = document.getElementById('chartAssetClass').getContext('2d');
+    charts.asset = new Chart(ctxAsset, {
+        type: 'doughnut',
+        data: {
+            labels: ['Industrial ($42.2M)', 'Office ($35.8M)', 'Retail ($17.3M)'],
+            datasets: [{
+                data: [42.2, 35.8, 17.3],
+                backgroundColor: ['#10b981', '#3b82f6', '#ec4899'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
+        }
+    });
+
+    // 3. 36-Month Historical Revenue, OPEX & NOI
+    const ctxHist = document.getElementById('chartHistoricalFin').getContext('2d');
+    charts.hist = new Chart(ctxHist, {
+        type: 'line',
+        data: {
+            labels: histMonths,
+            datasets: [
+                {
+                    label: 'Gross Revenue ($M)',
+                    data: histRev,
+                    borderColor: '#60a5fa',
+                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Total OPEX ($M)',
+                    data: histOpex,
+                    borderColor: '#f43f5e',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Net Operating Income ($M)',
+                    data: histNoi,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#94a3b8' } } },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+
+    // 4. Rollover Schedule Timeline
+    const ctxRoll = document.getElementById('chartRollover').getContext('2d');
+    charts.roll = new Chart(ctxRoll, {
+        type: 'bar',
+        data: {
+            labels: ['2026', '2027', '2028', '2029', '2030', '2031+'],
+            datasets: [
+                {
+                    label: 'Expiring RSF (Thousand SF)',
+                    data: [685, 797, 612, 540, 890, 1302],
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#94a3b8' } } },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+
+    // 5. Mark to Market
+    const ctxMtm = document.getElementById('chartMtm').getContext('2d');
+    charts.mtm = new Chart(ctxMtm, {
+        type: 'bar',
+        data: {
+            labels: ['Austin (Office)', 'DFW (Office)', 'Atlanta (Office)', 'Charlotte (Office)', 'Austin (Ind)', 'DFW (Ind)', 'Atlanta (Ind)', 'Charlotte (Ind)'],
+            datasets: [
+                {
+                    label: 'In-Place Contract Rent ($/SF)',
+                    data: [39.8, 33.5, 34.2, 31.0, 7.8, 7.2, 5.9, 5.8],
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Market Asking Rate ($/SF)',
+                    data: [42.0, 36.0, 35.0, 32.5, 9.5, 8.2, 7.5, 7.2],
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#94a3b8' } } },
+            scales: {
+                x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+
+    // 6. Top Tenants
+    const ctxTenants = document.getElementById('chartTenants').getContext('2d');
+    charts.tenants = new Chart(ctxTenants, {
+        type: 'bar',
+        data: {
+            labels: topTenantsData.map(t => t.name),
+            datasets: [{
+                label: 'Annual Contract Rent ($ Millions)',
+                data: topTenantsData.map(t => t.rev),
+                backgroundColor: ['#10b981','#10b981','#059669','#34d399','#64748b','#10b981','#059669','#10b981','#64748b','#34d399'],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+
+    // 7. Credit Distribution
+    const ctxCredit = document.getElementById('chartCredit').getContext('2d');
+    charts.credit = new Chart(ctxCredit, {
+        type: 'doughnut',
+        data: {
+            labels: ['Investment Grade (AAA-BBB)', 'Speculative Grade (BB-B)', 'Non-Rated (NR)'],
+            datasets: [{
+                data: [61.4, 24.1, 14.5],
+                backgroundColor: ['#10b981', '#f59e0b', '#64748b'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
+        }
+    });
+}
+
+// On Page Load
+window.addEventListener('DOMContentLoaded', () => {
+    renderPropertyTable(propertyData);
+    renderRolloverTable();
+    initCharts();
+});
+</script>
+
+</body>
+</html>

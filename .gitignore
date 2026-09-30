@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Generated Data (reproducible via generator script)
+data/raw/*.csv
+data/processed/*.csv
+data/processed/*.parquet
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Environment
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Power BI
+*.pbix
+*.pbit
+
+# Docker volumes
+postgres_data/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Reports / generated figures
+reports/figures/*.png
+reports/figures/*.svg
+!reports/figures/.gitkeep

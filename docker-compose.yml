@@ -1,0 +1,41 @@
+version: '3.8'
+
+# =============================================================
+# Commercial Real Estate Portfolio Analytics — PostgreSQL
+# =============================================================
+# Usage:
+#   docker compose up -d          # Start PostgreSQL
+#   docker compose down           # Stop (data persisted)
+#   docker compose down -v        # Stop and delete data
+# =============================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cre_portfolio_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cre_portfolio}
+      POSTGRES_USER: ${POSTGRES_USER:-cre_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cre_analytics_2024}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/raw:/data/raw:ro          # CSVs accessible inside container
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cre_admin} -d ${POSTGRES_DB:-cre_portfolio}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    # Performance tuning for analytics workloads
+    command: >
+      postgres
+        -c shared_buffers=256MB
+        -c work_mem=64MB
+        -c maintenance_work_mem=128MB
+        -c effective_cache_size=512MB
+
+volumes:
+  postgres_data:
+    driver: local
