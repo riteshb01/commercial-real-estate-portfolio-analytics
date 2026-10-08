@@ -1,29 +1,21 @@
--- ============================================================
 -- Commercial Real Estate Portfolio Analytics
 -- Database Schema Definition (PostgreSQL 16)
--- ============================================================
 --
--- Portfolio: 25 institutional-grade properties across 4 Sunbelt
---            markets (Austin, DFW, Atlanta, Charlotte)
--- Schema:    cre_analytics (normalized 3NF + analytical support)
---
--- Tables:
---   Dimensions:  dim_date, dim_markets, dim_properties, dim_tenants
---   Facts:       fct_leases, fct_property_monthly_financials
---
--- ============================================================
+-- Star schema for 25 properties across 4 Sunbelt markets.
+-- Schema: cre_analytics
+-- Tables: dim_date, dim_markets, dim_properties, dim_tenants
+--         fct_leases, fct_property_monthly_financials
+
 
 -- Create dedicated schema
 CREATE SCHEMA IF NOT EXISTS cre_analytics;
 SET search_path TO cre_analytics, public;
 
--- ============================================================
--- DIMENSION TABLES
--- ============================================================
+-- ── Dimension Tables ────────────────────────────────────────
 
--- ---------------------------------------------------------
--- Date Dimension (for Star Schema / Power BI time intelligence)
--- ---------------------------------------------------------
+
+-- dim_date: date dimension for star schema / Power BI time intelligence
+
 CREATE TABLE IF NOT EXISTS dim_date (
     date_key            DATE        PRIMARY KEY,
     year                SMALLINT    NOT NULL,
@@ -41,8 +33,6 @@ CREATE TABLE IF NOT EXISTS dim_date (
     fiscal_quarter      SMALLINT    NOT NULL
 );
 
-COMMENT ON TABLE dim_date
-    IS 'Date dimension for time-series analysis, Power BI star schema, and DAX time intelligence.';
 
 -- Populate date dimension (2020-01-01 through 2030-12-31)
 INSERT INTO dim_date (
@@ -76,33 +66,25 @@ FROM generate_series('2020-01-01'::DATE, '2030-12-31'::DATE, '1 day'::INTERVAL) 
 ON CONFLICT (date_key) DO NOTHING;
 
 
--- ---------------------------------------------------------
--- Markets Dimension
--- ---------------------------------------------------------
+-- dim_markets: market benchmarks for 4 Sunbelt metros
+
 CREATE TABLE IF NOT EXISTS dim_markets (
-    market_id               SERIAL      PRIMARY KEY,
-    metro_area              VARCHAR(100) NOT NULL,
-    state                   CHAR(2)     NOT NULL,
+    market_id               SERIAL          PRIMARY KEY,
+    metro_area              VARCHAR(100)    NOT NULL,
+    state                   CHAR(2)         NOT NULL,
     submarket               VARCHAR(150),
-    avg_class_a_rent_psf    NUMERIC(10,2),   -- $/SF/Year Class A Office
-    avg_class_b_rent_psf    NUMERIC(10,2),   -- $/SF/Year Class B Office
-    avg_industrial_rent_psf NUMERIC(10,2),   -- $/SF/Year Industrial
-    avg_retail_rent_psf     NUMERIC(10,2),   -- $/SF/Year Retail
-    market_vacancy_rate     NUMERIC(5,2),    -- Overall vacancy (%)
-    market_cap_rate         NUMERIC(5,2)     -- Prevailing cap rate (%)
+    avg_class_a_rent_psf    NUMERIC(10,2),
+    avg_class_b_rent_psf    NUMERIC(10,2),
+    avg_industrial_rent_psf NUMERIC(10,2),
+    avg_retail_rent_psf     NUMERIC(10,2),
+    market_vacancy_rate     NUMERIC(5,2),   -- Overall vacancy (%)
+    market_cap_rate         NUMERIC(5,2)    -- Prevailing cap rate (%)
 );
 
-COMMENT ON TABLE dim_markets
-    IS 'CRE market benchmarks for 4 Sunbelt metros. Rents are annual $/SF averages.';
-COMMENT ON COLUMN dim_markets.avg_class_a_rent_psf
-    IS 'Average asking rent for Class A office space ($/SF/year).';
-COMMENT ON COLUMN dim_markets.market_cap_rate
-    IS 'Prevailing market capitalization rate — key metric for property valuation.';
 
 
--- ---------------------------------------------------------
--- Properties Dimension
--- ---------------------------------------------------------
+-- dim_properties: 25 institutional-grade commercial properties
+
 CREATE TABLE IF NOT EXISTS dim_properties (
     property_id         SERIAL          PRIMARY KEY,
     property_name       VARCHAR(200)    NOT NULL,
@@ -119,24 +101,13 @@ CREATE TABLE IF NOT EXISTS dim_properties (
     address             VARCHAR(300)
 );
 
-COMMENT ON TABLE dim_properties
-    IS '25 institutional-grade commercial properties across Austin, DFW, Atlanta, and Charlotte.';
-COMMENT ON COLUMN dim_properties.total_rsf
-    IS 'Total Rentable Square Feet — the leasable area of the property.';
-COMMENT ON COLUMN dim_properties.asset_class
-    IS 'Primary asset classification: Office (Class A/B), Industrial, or Retail.';
-COMMENT ON COLUMN dim_properties.acquisition_price
-    IS 'Purchase price at acquisition — basis for cap rate & return calculations.';
-
-CREATE INDEX IF NOT EXISTS idx_properties_market
-    ON dim_properties(market_id);
-CREATE INDEX IF NOT EXISTS idx_properties_asset_class
-    ON dim_properties(asset_class);
+CREATE INDEX IF NOT EXISTS idx_properties_market     ON dim_properties(market_id);
+CREATE INDEX IF NOT EXISTS idx_properties_asset_class ON dim_properties(asset_class);
 
 
--- ---------------------------------------------------------
--- Tenants Dimension
--- ---------------------------------------------------------
+
+-- dim_tenants: commercial tenants across industries
+
 CREATE TABLE IF NOT EXISTS dim_tenants (
     tenant_id       SERIAL          PRIMARY KEY,
     tenant_name     VARCHAR(200)    NOT NULL,
@@ -148,26 +119,15 @@ CREATE TABLE IF NOT EXISTS dim_tenants (
     public_company  BOOLEAN         DEFAULT FALSE
 );
 
-COMMENT ON TABLE dim_tenants
-    IS 'Commercial tenants across Technology, Finance, Healthcare, Logistics, and other sectors.';
-COMMENT ON COLUMN dim_tenants.credit_rating
-    IS 'Credit quality: investment-grade (BBB and above), speculative-grade (BB and below), NR = not rated.';
-COMMENT ON COLUMN dim_tenants.tenant_type
-    IS 'Operating scale: National (multi-market), Regional (single region), Local (single market).';
-
-CREATE INDEX IF NOT EXISTS idx_tenants_industry
-    ON dim_tenants(industry);
-CREATE INDEX IF NOT EXISTS idx_tenants_credit
-    ON dim_tenants(credit_rating);
+CREATE INDEX IF NOT EXISTS idx_tenants_industry ON dim_tenants(industry);
+CREATE INDEX IF NOT EXISTS idx_tenants_credit   ON dim_tenants(credit_rating);
 
 
--- ============================================================
--- FACT TABLES
--- ============================================================
 
--- ---------------------------------------------------------
--- Leases Fact Table
--- ---------------------------------------------------------
+-- ── Fact Tables ─────────────────────────────────────────────
+
+-- fct_leases: individual lease agreements linking tenants to property suites
+
 CREATE TABLE IF NOT EXISTS fct_leases (
     lease_id                SERIAL          PRIMARY KEY,
     property_id             INT             NOT NULL REFERENCES dim_properties(property_id),
@@ -187,36 +147,19 @@ CREATE TABLE IF NOT EXISTS fct_leases (
     free_rent_months        SMALLINT        DEFAULT 0,
     tenant_improvement_psf  NUMERIC(10,2)   DEFAULT 0.00,
 
-    -- Expiration must be after commencement
     CONSTRAINT chk_lease_dates CHECK (lease_expiration_date > lease_start_date)
 );
 
-COMMENT ON TABLE fct_leases
-    IS 'Individual lease agreements linking tenants to specific property suites/bays.';
-COMMENT ON COLUMN fct_leases.base_rent_psf_year
-    IS 'Base annual rent per square foot at lease inception — escalates per annual_escalation_pct.';
-COMMENT ON COLUMN fct_leases.lease_type
-    IS 'Lease structure: NNN (tenant pays taxes/insurance/CAM), Modified Gross, Full Service Gross, Percentage (retail).';
-COMMENT ON COLUMN fct_leases.free_rent_months
-    IS 'Number of months of free rent (concession) at lease commencement.';
-COMMENT ON COLUMN fct_leases.tenant_improvement_psf
-    IS 'Landlord-funded tenant improvement allowance ($/SF) — amortized over lease term.';
-
-CREATE INDEX IF NOT EXISTS idx_leases_property
-    ON fct_leases(property_id);
-CREATE INDEX IF NOT EXISTS idx_leases_tenant
-    ON fct_leases(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_leases_expiration
-    ON fct_leases(lease_expiration_date);
-CREATE INDEX IF NOT EXISTS idx_leases_dates
-    ON fct_leases(lease_start_date, lease_expiration_date);
-CREATE INDEX IF NOT EXISTS idx_leases_status
-    ON fct_leases(lease_status);
+CREATE INDEX IF NOT EXISTS idx_leases_property    ON fct_leases(property_id);
+CREATE INDEX IF NOT EXISTS idx_leases_tenant      ON fct_leases(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_leases_expiration  ON fct_leases(lease_expiration_date);
+CREATE INDEX IF NOT EXISTS idx_leases_dates       ON fct_leases(lease_start_date, lease_expiration_date);
+CREATE INDEX IF NOT EXISTS idx_leases_status      ON fct_leases(lease_status);
 
 
--- ---------------------------------------------------------
--- Property Monthly Financials Fact Table
--- ---------------------------------------------------------
+
+-- fct_property_monthly_financials: 36 months of property-level operating data
+
 CREATE TABLE IF NOT EXISTS fct_property_monthly_financials (
     record_id               SERIAL          PRIMARY KEY,
     property_id             INT             NOT NULL REFERENCES dim_properties(property_id),
@@ -238,27 +181,13 @@ CREATE TABLE IF NOT EXISTS fct_property_monthly_financials (
     CONSTRAINT uq_property_period UNIQUE (property_id, period_date)
 );
 
-COMMENT ON TABLE fct_property_monthly_financials
-    IS '36 months (Jan 2023 – Dec 2025) of property-level operating financials.';
-COMMENT ON COLUMN fct_property_monthly_financials.period_date
-    IS 'First day of the reporting month (always YYYY-MM-01).';
-COMMENT ON COLUMN fct_property_monthly_financials.gross_rental_revenue
-    IS 'Total base rent collected from all active leases in the property for the month.';
-COMMENT ON COLUMN fct_property_monthly_financials.cam_charges
-    IS 'Common Area Maintenance: janitorial, landscaping, security, common-area utilities.';
-
-CREATE INDEX IF NOT EXISTS idx_fin_property
-    ON fct_property_monthly_financials(property_id);
-CREATE INDEX IF NOT EXISTS idx_fin_period
-    ON fct_property_monthly_financials(period_date);
-CREATE INDEX IF NOT EXISTS idx_fin_property_period
-    ON fct_property_monthly_financials(property_id, period_date);
+CREATE INDEX IF NOT EXISTS idx_fin_property        ON fct_property_monthly_financials(property_id);
+CREATE INDEX IF NOT EXISTS idx_fin_period          ON fct_property_monthly_financials(period_date);
+CREATE INDEX IF NOT EXISTS idx_fin_property_period ON fct_property_monthly_financials(property_id, period_date);
 
 
--- ============================================================
--- GRANT READ ACCESS (for analytics/BI read-only user)
--- ============================================================
--- Uncomment if creating a read-only analytics user:
+-- Read-only analytics role (uncomment to activate):
 -- CREATE ROLE cre_analyst WITH LOGIN PASSWORD 'analyst_readonly';
 -- GRANT USAGE ON SCHEMA cre_analytics TO cre_analyst;
 -- GRANT SELECT ON ALL TABLES IN SCHEMA cre_analytics TO cre_analyst;
+

@@ -1,27 +1,12 @@
--- ============================================================
--- Commercial Real Estate Portfolio Performance & Lease Risk Analytics
+-- Commercial Real Estate Portfolio Analytics
 -- Advanced SQL Query Suite (PostgreSQL 16)
--- ============================================================
 -- Schema: cre_analytics
---
--- This script contains 10 production-grade institutional CRE
--- analytical queries featuring:
---   - Common Table Expressions (CTEs) & Recursive Logic
---   - Window Functions (SUM/AVG OVER, LAG/LEAD, RANK, DENSE_RANK, NTILE)
---   - Multi-Table Joins & Star Schema Traversals
---   - Rolling-Period & Multi-Period Time Intelligence
---   - Conditional Aggregations & Weighted Average Calculations
---   - Stress Testing & Scenario Risk Modeling
--- ============================================================
+
 
 SET search_path TO cre_analytics, public;
 
--- ============================================================
--- QUERY 1: EXECUTIVE PORTFOLIO SCORECARD & YTD METRICS
--- Purpose: Provides high-level portfolio KPIs across markets and
---          asset classes for executive leadership reviews.
--- Techniques: CTEs, Multi-Table Joins, Conditional Aggregation
--- ============================================================
+-- Query 1: Executive Portfolio Scorecard & YTD Metrics by Asset Class
+
 
 WITH property_active_leases AS (
     SELECT
@@ -72,12 +57,8 @@ GROUP BY pal.asset_class
 ORDER BY annual_2025_revenue DESC;
 
 
--- ============================================================
--- QUERY 2: ROLLING 3-MONTH & 12-MONTH NOI AND MARGIN TRENDS
--- Purpose: Computes trailing multi-period revenue, OPEX, NOI, and
---          smooths monthly cash flow variations using window frames.
--- Techniques: Window Functions with ROWS BETWEEN, Trailing Calculations
--- ============================================================
+-- Query 2: Rolling 3-Month & 12-Month NOI and Margin Trends
+
 
 WITH monthly_totals AS (
     SELECT
@@ -129,12 +110,8 @@ FROM monthly_totals
 ORDER BY period_date ASC;
 
 
--- ============================================================
--- QUERY 3: LEASE ROLLOVER SCHEDULE & WALT BY PROPERTY
--- Purpose: Quantifies lease expiration exposure over the next 5+ years
---          and calculates Weighted Average Lease Term (WALT).
--- Techniques: Weighted Aggregation, Expiration Bucketing, Star Joins
--- ============================================================
+-- Query 3: Lease Rollover Schedule & WALT by Property
+
 
 WITH lease_term_calc AS (
     SELECT
@@ -184,12 +161,8 @@ GROUP BY property_id, property_name, asset_class, metro_area, total_rsf
 ORDER BY sqft_walt_years ASC;
 
 
--- ============================================================
--- QUERY 4: TENANT CONCENTRATION & CREDIT RISK EXPOSURE (TOP 10 + HHI)
--- Purpose: Identifies key tenant credit risk, revenue concentration,
---          and computes the Herfindahl-Hirschman Index (HHI).
--- Techniques: Window Ranking, Cumulative Sums, HHI Market Share
--- ============================================================
+-- Query 4: Tenant Concentration & Credit Risk Exposure (Top 10 + HHI)
+
 
 WITH tenant_portfolio_share AS (
     SELECT
@@ -252,12 +225,8 @@ WHERE revenue_rank <= 10
 ORDER BY revenue_rank ASC;
 
 
--- ============================================================
--- QUERY 5: MARK-TO-MARKET RENT GAP & LOSS-TO-LEASE ANALYSIS
--- Purpose: Identifies embedded rent growth potential by comparing
---          expiring lease contract rents with market benchmark rates.
--- Techniques: Conditional Market Matching, Variance Calculations
--- ============================================================
+-- Query 5: Mark-to-Market Rent Gap & Loss-to-Lease Analysis
+
 
 WITH property_market_benchmark AS (
     SELECT
@@ -300,12 +269,8 @@ GROUP BY metro_area, asset_class
 ORDER BY total_annual_mtm_opportunity DESC;
 
 
--- ============================================================
--- QUERY 6: MONTH-OVER-MONTH (MOM) & YEAR-OVER-YEAR (YOY) VARIANCE
--- Purpose: Evaluates top-line and bottom-line growth velocity and
---          identifies inflection points across 36 operating months.
--- Techniques: LAG() Window Functions, Multi-Interval Partitioning
--- ============================================================
+-- Query 6: Month-over-Month (MoM) & Year-over-Year (YoY) Variance
+
 
 WITH monthly_portfolio_performance AS (
     SELECT
@@ -350,15 +315,9 @@ WHERE prior_year_revenue IS NOT NULL  -- Filter to periods with YoY comparisons 
 ORDER BY year_month ASC;
 
 
--- ============================================================
--- QUERY 7: LEASE ROLLOVER STRESS TESTING & CASH FLOW SENSITIVITY
--- Purpose: Stress tests 2026-2027 expiring lease cash flows under
---          three renewal scenarios:
---            - Base Case: 100% Renewal at Current Rates
---            - Moderate Downturn: 70% Renewal / 30% Vacancy Loss
---            - Severe Stress Case: 40% Renewal / 60% Vacancy Loss
--- Techniques: CTE Simulation, Scenario Modeling, Sensitivity Matrix
--- ============================================================
+-- Query 7: Lease Rollover Stress Testing & Cash Flow Sensitivity
+-- Scenarios: 100% / 70% / 40% renewal across 2026-2027 expirations
+
 
 WITH upcoming_expirations AS (
     SELECT
@@ -395,13 +354,8 @@ FROM upcoming_expirations
 ORDER BY expiring_annual_revenue DESC;
 
 
--- ============================================================
--- QUERY 8: OPERATING EXPENSE EFFICIENCY & OUTLIER DETECTION
--- Purpose: Identifies operational inefficiencies and expense spikes
---          by computing property-level OPEX PSF and comparing against
---          asset-class benchmark averages.
--- Techniques: Window Z-Score / Deviations, Expense Category Decomposition
--- ============================================================
+-- Query 8: Operating Expense Efficiency & Outlier Detection
+
 
 WITH property_opex_2025 AS (
     SELECT
@@ -467,12 +421,8 @@ FROM opex_psf_metrics
 ORDER BY variance_from_benchmark_psf DESC;
 
 
--- ============================================================
--- QUERY 9: PROPERTY ASSET CLASS & MARKET PERFORMANCE MATRIX
--- Purpose: Generates cross-market, cross-asset performance matrix
---          evaluating RSF, Occupancy, NOI, and NOI Margin.
--- Techniques: Multi-Dimensional Aggregation, Rollup Logic
--- ============================================================
+-- Query 9: Property Asset Class & Market Performance Matrix
+
 
 WITH property_summary_2025 AS (
     SELECT
@@ -516,13 +466,9 @@ GROUP BY metro_area, asset_class
 ORDER BY metro_area, asset_class;
 
 
--- ============================================================
--- QUERY 10: ACTIONABLE ASSET MANAGEMENT EXPIRATION ALERT (24M)
--- Purpose: Generates prioritized tactical action list of upcoming
---          lease expirations within the next 24 months, highlighting
---          large-tenant exposures and renewal lead times.
--- Techniques: Date Arithmetic, Multi-Tier Priority Flagging, Star Joins
--- ============================================================
+-- Query 10: Actionable Asset Management Expiration Alert (24-Month)
+-- Prioritizes upcoming lease expirations by tenant size and urgency
+
 
 SELECT
     l.lease_id,

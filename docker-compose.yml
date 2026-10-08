@@ -1,13 +1,9 @@
-version: '3.8'
-
-# =============================================================
-# Commercial Real Estate Portfolio Analytics — PostgreSQL
-# =============================================================
+# PostgreSQL 16 for the CRE Analytics project
 # Usage:
-#   docker compose up -d          # Start PostgreSQL
-#   docker compose down           # Stop (data persisted)
-#   docker compose down -v        # Stop and delete data
-# =============================================================
+#   docker compose up -d        # start
+#   docker compose down         # stop (data persisted)
+#   docker compose down -v      # stop and delete volume
+
 
 services:
   postgres:

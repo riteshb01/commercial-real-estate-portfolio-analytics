@@ -1,23 +1,14 @@
--- ============================================================
 -- Commercial Real Estate Portfolio Analytics
--- SQL Views & Analytical Data Marts (PostgreSQL 16)
--- ============================================================
+-- Analytical Views & Data Marts (PostgreSQL 16)
 -- Schema: cre_analytics
---
--- This script creates pre-aggregated analytical views and data
--- marts designed for executive dashboards, Power BI star schema
--- consumption, and asset management decision support.
--- ============================================================
+
 
 SET search_path TO cre_analytics, public;
 
--- ============================================================
--- 1. VIEW: Monthly Property Performance Metrics
--- ============================================================
--- Granularity: Property x Month
--- Metrics: Gross Revenue, Total OPEX, NOI, NOI Margin %, Revenue PSF,
---          OPEX PSF, Expense Ratio %, Occupied SF, Occupancy Rate %
--- ============================================================
+-- vw_property_monthly_kpis
+-- Granularity: Property × Month
+-- Metrics: Revenue, OPEX breakdown, NOI, NOI Margin, Occupancy Rate, PSF unit metrics
+
 
 CREATE OR REPLACE VIEW vw_property_monthly_kpis AS
 WITH lease_occupancy_by_month AS (
@@ -111,13 +102,10 @@ COMMENT ON VIEW vw_property_monthly_kpis
     IS 'Property-level monthly performance mart containing revenues, OPEX breakdown, NOI, occupancy, and PSF unit metrics.';
 
 
--- ============================================================
--- 2. VIEW: Lease Rollover & Expiration Risk Schedule
--- ============================================================
--- Granularity: Lease / Property / Expiration Year & Quarter
--- Metrics: Leased RSF expiring, Annual base rent expiring,
---          % of total portfolio RSF & revenue at risk, Remaining Term (Months)
--- ============================================================
+-- vw_lease_rollover_schedule
+-- Granularity: Active Lease
+-- Metrics: Expiring RSF, annual rent, % portfolio at risk, remaining term, urgency tier
+
 
 CREATE OR REPLACE VIEW vw_lease_rollover_schedule AS
 WITH portfolio_totals AS (
@@ -178,13 +166,10 @@ COMMENT ON VIEW vw_lease_rollover_schedule
     IS 'Active lease rollover schedule with expiration timeline, remaining lease terms, and revenue-at-risk percentages.';
 
 
--- ============================================================
--- 3. VIEW: Tenant Concentration & Credit Exposure Mart
--- ============================================================
+-- vw_tenant_concentration_risk
 -- Granularity: Tenant
--- Metrics: Total leased RSF, Total annual rent, Number of properties,
---          % of total portfolio revenue, Credit rating, Concentration rank
--- ============================================================
+-- Metrics: Leased RSF, annual rent, property count, % portfolio revenue, credit tier, WALT
+
 
 CREATE OR REPLACE VIEW vw_tenant_concentration_risk AS
 WITH portfolio_summary AS (
@@ -245,12 +230,10 @@ COMMENT ON VIEW vw_tenant_concentration_risk
     IS 'Tenant concentration mart tracking revenue share, credit tier, WALT, and concentration risk categories.';
 
 
--- ============================================================
--- 4. VIEW: Mark-to-Market Rent Analysis (In-Place vs Market)
--- ============================================================
--- Granularity: Property x Asset Class
--- Purpose: Identifies loss-to-lease and upside potential upon renewal
--- ============================================================
+-- vw_market_rent_variance
+-- Granularity: Property × Asset Class
+-- Purpose: Identify loss-to-lease and upside potential on renewal
+
 
 CREATE OR REPLACE VIEW vw_market_rent_variance AS
 SELECT
@@ -346,11 +329,9 @@ COMMENT ON VIEW vw_market_rent_variance
     IS 'Mark-to-market comparison of in-place contract rents vs market asking rents by property.';
 
 
--- ============================================================
--- 5. VIEW: Portfolio Executive KPI Summary (2025 Full Year)
--- ============================================================
--- Granularity: Single Row / Executive Dashboard Card Metrics
--- ============================================================
+-- vw_executive_portfolio_summary
+-- Granularity: Single-row executive scorecard (2025 FY)
+
 
 CREATE OR REPLACE VIEW vw_executive_portfolio_summary AS
 WITH active_leases AS (

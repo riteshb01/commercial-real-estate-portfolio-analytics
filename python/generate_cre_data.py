@@ -1,35 +1,19 @@
 #!/usr/bin/env python3
 """
-Commercial Real Estate Portfolio Data Generator
-================================================
+CRE Portfolio Data Generator
 
-Generates synthetic but realistic institutional-quality CRE portfolio data
-for a multi-property investment portfolio across 4 Sunbelt markets.
+Generates synthetic institutional-quality CRE data for 25 properties across
+4 Sunbelt markets. Outputs CSVs to data/raw/ and SQL seed to sql/02_seed_data.sql.
 
-Portfolio Profile:
-    - 25 institutional-grade properties (Industrial, Office, Retail)
-    - 4 markets:  Austin TX, Dallas-Fort Worth TX, Atlanta GA, Charlotte NC
-    - ~100 tenants across 7 industry sectors
-    - ~170 leases with structured expiration profiles
-    - 36 months of monthly property-level financials (Jan 2023 – Dec 2025)
+Deliberate analytical signals:
+  - Properties 2 & 17: rising vacancy (underperformers)
+  - Property 14:       utility cost spike in Q3 2024 (HVAC anomaly)
+  - Lease cliff:       ~35% of RSF expires 2026–2027
 
-Deliberate Analytical Signals (designed for discovery):
-    1. Two underperforming office properties (IDs 2, 17) with rising vacancy
-    2. One property (ID 14) with abnormal utility cost spike in Q3 2024
-    3. A lease-expiration cliff concentrated in 2026-2027 (~35 % of portfolio RSF)
-
-Outputs:
-    - data/raw/*.csv   — CSV files for each table
-    - sql/02_seed_data.sql — PostgreSQL INSERT statements
-
-Usage:
-    python python/generate_cre_data.py
-
-Author: Ritesh Bastola
+Usage: python python/generate_cre_data.py
 """
 
 import os
-import sys
 import random
 from datetime import date, timedelta
 from pathlib import Path
