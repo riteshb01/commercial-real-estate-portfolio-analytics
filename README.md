@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Pandas](https://img.shields.io/badge/Pandas-Analytics-150458?style=for-the-badge&logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 
-An institutional-grade Commercial Real Estate (CRE) investment and asset management analytics platform integrating property, tenant credit, lease contracts, market asking rent benchmarks, operating expenses, and cash flows across a **6.44M RSF multi-asset portfolio (25 properties across Austin, Dallas-Fort Worth, Atlanta, and Charlotte)**.
+End-to-end commercial real estate portfolio analytics featuring financial performance, occupancy trends, lease rollover, tenant credit risk, and interactive scenario modeling.
 
 ---
 
@@ -170,42 +170,6 @@ GROUP BY property_id, property_name, asset_class, metro_area, total_rsf
 ORDER BY sqft_walt_years ASC;
 ```
 
----
-
-## Directory Structure
-
-```
-real_estate-project/
-├── docker-compose.yml              # PostgreSQL 16 Alpine container configuration
-├── requirements.txt                # Python analytics dependencies
-├── data/
-│   ├── raw/                        # 5 Raw CSV datasets (properties, tenants, leases, financials, markets)
-│   └── processed/                  # Enriched data marts for BI consumption
-├── sql/
-│   ├── 01_schema_ddl.sql           # DDL schema definition & date dimension generator
-│   ├── 02_seed_data.sql            # Seed scripts for dimensions and 36-month financials
-│   ├── 03_views_and_marts.sql      # 5 Pre-aggregated analytical views
-│   └── 04_advanced_analytics.sql   # 10 Institutional CRE analytical SQL queries
-├── python/
-│   ├── generate_cre_data.py        # Calibrated data generator (realistic CRE financial metrics)
-│   └── cre_analytics.py            # Automated pipeline & visualization engine
-├── powerbi/
-│   ├── DAX_Measures.md             # 25+ Production DAX formulas
-│   ├── Data_Model_Star_Schema.md   # Star Schema architecture & ERD
-│   └── Dashboard_Wireframes_and_Guide.md # 4-page dashboard specification
-└── reports/
-    ├── portfolio_performance_report.md  # Investment Committee executive evaluation memo
-    ├── interactive_dashboard.html       # Responsive web dashboard with live stress tester
-    └── figures/                         # Publication-quality charts (PNG)
-        ├── 01_portfolio_occupancy_by_market.png
-        ├── 02_noi_margin_by_asset_class.png
-        ├── 03_lease_rollover_schedule_timeline.png
-        ├── 04_tenant_concentration_top10.png
-        ├── 05_mark_to_market_rent_variance.png
-        └── 06_revenue_at_risk_stress_test.png
-```
-
----
 
 ## How to Run & Explore
 
@@ -234,4 +198,4 @@ python python/cre_analytics.py
 ```
 
 ### 3. Open Interactive Executive Dashboard
-Simply open [reports/interactive_dashboard.html](file:///Users/riteshbastola/Desktop/real_estate-project/reports/interactive_dashboard.html) in any modern web browser (Google Chrome, Edge, Safari, Firefox) to interactively explore the dashboard, filter metrics, and test rollover scenarios.
+Open `portfolio_intelligence-dashboard.html` in any modern web browser (Chrome, Edge, Safari, or Firefox) to explore the interactive dashboard, filter portfolio metrics, analyze financial performance, and simulate lease renewal scenarios.
